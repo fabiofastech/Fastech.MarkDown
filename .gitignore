@@ -1,0 +1,17 @@
+# Windows / Visual Studio
+.vs/
+*.user
+bin/
+obj/
+
+# Publish output
+publish/
+
+# Settings utente (contengono path locali)
+# non escludere se si vuole condividerli: rimuovere la riga sotto
+# appsettings.Development.json
+
+# OS
+Thumbs.db
+desktop.ini
+.DS_Store
