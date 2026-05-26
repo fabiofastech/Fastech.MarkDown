@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Fastech Markdown Viewer — WiX v5 Installer
+  Installa in: %ProgramFiles%\Fastech\MarkDown
+  Registra:    .md e .markdown come app predefinita
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+
+  <Package Name="Fastech Markdown Viewer"
+           Manufacturer="Fastech"
+           Version="1.0.0.0"
+           UpgradeCode="6D7F8A9B-C0D1-E2F3-A4B5-C6D7E8F90123"
+           Language="1040"
+           Codepage="1252">
+
+    <SummaryInformation Keywords="Installer" Description="Fastech Markdown Viewer Setup" />
+
+    <MajorUpgrade
+      DowngradeErrorMessage="È già installata una versione più recente di Fastech Markdown Viewer." />
+
+    <MediaTemplate EmbedCab="yes" />
+
+    <!-- ── Directory structure ─────────────────────────────────────────────── -->
+    <StandardDirectory Id="ProgramFiles6432Folder">
+      <Directory Id="FastechDir" Name="Fastech">
+        <Directory Id="INSTALLFOLDER" Name="MarkDown" />
+      </Directory>
+    </StandardDirectory>
+
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="FastechMenuFolder" Name="Fastech" />
+    </StandardDirectory>
+
+    <!-- ── Features ───────────────────────────────────────────────────────── -->
+    <Feature Id="ProductFeature" Title="Fastech Markdown Viewer" Level="1">
+      <ComponentGroupRef Id="AppFiles" />
+      <ComponentRef Id="StartMenuShortcutComp" />
+      <ComponentRef Id="FileAssocComp" />
+    </Feature>
+
+    <!-- ── Start Menu shortcut ────────────────────────────────────────────── -->
+    <Component Id="StartMenuShortcutComp" Directory="FastechMenuFolder" Guid="*">
+      <Shortcut Id="AppStartMenuShortcut"
+                Name="Fastech Markdown Viewer"
+                Description="Visualizzatore Markdown per Windows"
+                Target="[INSTALLFOLDER]Fastech.MarkDown.App.exe"
+                WorkingDirectory="INSTALLFOLDER" />
+      <RemoveFolder Id="RemoveFastechMenuFolder" Directory="FastechMenuFolder" On="uninstall" />
+      <RegistryValue Root="HKCU"
+                     Key="Software\Fastech\MarkdownViewer"
+                     Name="Installed" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+
+    <!-- ── File associations: .md e .markdown → app predefinita ──────────── -->
+    <Component Id="FileAssocComp" Directory="INSTALLFOLDER" Guid="*">
+
+      <!-- ProgID -->
+      <RegistryValue Root="HKCR"
+                     Key="Fastech.MarkdownFile"
+                     Value="File Markdown" Type="string" KeyPath="yes" />
+      <RegistryValue Root="HKCR"
+                     Key="Fastech.MarkdownFile\DefaultIcon"
+                     Value="[INSTALLFOLDER]Fastech.MarkDown.App.exe,0" Type="string" />
+      <RegistryValue Root="HKCR"
+                     Key="Fastech.MarkdownFile\shell\open\command"
+                     Value="&quot;[INSTALLFOLDER]Fastech.MarkDown.App.exe&quot; &quot;%1&quot;" Type="string" />
+
+      <!-- Associa .md -->
+      <RegistryValue Root="HKCR" Key=".md"          Value="Fastech.MarkdownFile" Type="string" />
+      <RegistryValue Root="HKCR" Key=".md\OpenWithProgids\Fastech.MarkdownFile"
+                     Value="" Type="string" />
+
+      <!-- Associa .markdown -->
+      <RegistryValue Root="HKCR" Key=".markdown"    Value="Fastech.MarkdownFile" Type="string" />
+      <RegistryValue Root="HKCR" Key=".markdown\OpenWithProgids\Fastech.MarkdownFile"
+                     Value="" Type="string" />
+
+    </Component>
+
+  </Package>
+
+</Wix>

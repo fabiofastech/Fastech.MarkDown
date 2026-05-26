@@ -7,9 +7,12 @@ obj/
 # Publish output
 publish/
 
-# Settings utente (contengono path locali)
-# non escludere se si vuole condividerli: rimuovere la riga sotto
-# appsettings.Development.json
+# MSI output (generato da build-installer.ps1)
+output/
+
+# File temporanei WiX (generati durante il build)
+Fastech.MarkDown.Installer/_publish/
+Fastech.MarkDown.Installer/_AppFiles.wxs
 
 # OS
 Thumbs.db
