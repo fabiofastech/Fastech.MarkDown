@@ -33,7 +33,12 @@ public partial class MainWindow : Window
     {
         try
         {
-            await WebView.EnsureCoreWebView2Async();
+            var userDataFolder = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "Fastech", "MarkdownViewer", "WebView2");
+
+            var env = await CoreWebView2Environment.CreateAsync(null, userDataFolder);
+            await WebView.EnsureCoreWebView2Async(env);
 
             var wwwroot = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "wwwroot");
             WebView.CoreWebView2.SetVirtualHostNameToFolderMapping(
