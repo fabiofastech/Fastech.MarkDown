@@ -64,6 +64,17 @@ dotnet run --project Fastech.MarkDown.App
 
 ---
 
+## Build installer MSI
+
+Vedi [`Fastech.MarkDown.Installer/INSTALLER.md`](Fastech.MarkDown.Installer/INSTALLER.md) per le istruzioni complete.
+
+```powershell
+cd Fastech.MarkDown.Installer
+.\build-installer.ps1
+```
+
+---
+
 ## Struttura del progetto
 
 ```
