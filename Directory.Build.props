@@ -1,0 +1,7 @@
+<Project>
+  <PropertyGroup>
+    <_RepoName>$([System.IO.Path]::GetFileName($([System.IO.Directory]::GetCurrentDirectory())))</_RepoName>
+    <BaseIntermediateOutputPath>C:\_Local\VSCache\$(_RepoName)\$(MSBuildProjectName)\obj\</BaseIntermediateOutputPath>
+    <BaseOutputPath>C:\_Local\VSCache\$(_RepoName)\$(MSBuildProjectName)\bin\</BaseOutputPath>
+  </PropertyGroup>
+</Project>
