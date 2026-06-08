@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup>
-    <_RepoName>$([System.IO.Path]::GetFileName($([System.IO.Directory]::GetCurrentDirectory())))</_RepoName>
+    <_RepoName>$([System.IO.Path]::GetFileName('$(MSBuildThisFileDirectory.TrimEnd(`\`))'))</_RepoName>
     <BaseIntermediateOutputPath>C:\_Local\VSCache\$(_RepoName)\$(MSBuildProjectName)\obj\</BaseIntermediateOutputPath>
     <BaseOutputPath>C:\_Local\VSCache\$(_RepoName)\$(MSBuildProjectName)\bin\</BaseOutputPath>
   </PropertyGroup>
