@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+        xmlns:avalon="http://icsharpcode.net/sharpdevelop/avalonedit"
         mc:Ignorable="d"
         Title="Fastech Markdown Viewer" Height="750" Width="1200"
         WindowStartupLocation="CenterScreen"
@@ -106,6 +107,16 @@
                         Content="🔄  Aggiorna" Style="{StaticResource ToolbarButton}"
                         Click="BtnRefresh_Click"/>
                 <Separator DockPanel.Dock="Left" Background="#FFFFFF40" Width="1" Margin="4,8"/>
+                <Button DockPanel.Dock="Left" x:Name="BtnPreview"
+                        Content="👁  Anteprima" Style="{StaticResource ToolbarButton}"
+                        Click="BtnPreview_Click"/>
+                <Button DockPanel.Dock="Left" x:Name="BtnEdit"
+                        Content="✏  Modifica" Style="{StaticResource ToolbarButton}"
+                        Click="BtnEdit_Click"/>
+                <Button DockPanel.Dock="Left" x:Name="BtnSave"
+                        Content="💾  Salva" Style="{StaticResource ToolbarButton}"
+                        Click="BtnSave_Click" IsEnabled="False"/>
+                <Separator DockPanel.Dock="Left" Background="#FFFFFF40" Width="1" Margin="4,8"/>
                 <Button DockPanel.Dock="Left" x:Name="BtnToggleTree"
                         Content="☰  Pannello" Style="{StaticResource ToolbarButton}"
                         Click="BtnToggleTree_Click"/>
@@ -151,8 +162,20 @@
             <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Stretch"
                           Background="{StaticResource BrandWarmBorder}" Cursor="SizeWE"/>
 
-            <!-- Viewer -->
-            <wv2:WebView2 x:Name="WebView" Grid.Column="2"/>
+            <!-- Viewer + Editor (visibilità alternata) -->
+            <Grid Grid.Column="2">
+                <wv2:WebView2 x:Name="WebView"/>
+                <avalon:TextEditor x:Name="Editor"
+                                   Visibility="Collapsed"
+                                   FontFamily="Consolas, 'Courier New', monospace"
+                                   FontSize="14"
+                                   ShowLineNumbers="True"
+                                   WordWrap="True"
+                                   Background="#FFFDF8"
+                                   Foreground="{StaticResource BrandText}"
+                                   Padding="8"
+                                   TextChanged="Editor_TextChanged"/>
+            </Grid>
         </Grid>
 
         <!-- Status bar -->

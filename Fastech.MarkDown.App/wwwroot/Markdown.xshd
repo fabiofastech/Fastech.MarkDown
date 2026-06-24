@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<SyntaxDefinition name="Markdown" xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
+
+  <Color name="Heading"    foreground="#C87D00" fontWeight="bold" />
+  <Color name="Bold"       foreground="#2C1A00" fontWeight="bold" />
+  <Color name="Italic"     foreground="#2C1A00" fontStyle="italic" />
+  <Color name="InlineCode" foreground="#A33A00" />
+  <Color name="CodeBlock"  foreground="#6A737D" />
+  <Color name="Quote"      foreground="#6A737D" fontStyle="italic" />
+  <Color name="ListMarker" foreground="#F0A000" fontWeight="bold" />
+  <Color name="Link"       foreground="#0366D6" />
+  <Color name="Rule"       foreground="#E8C060" fontWeight="bold" />
+
+  <RuleSet ignoreCase="false">
+
+    <!-- Blocchi di codice recintati ```...``` -->
+    <Span color="CodeBlock" multiline="true">
+      <Begin>^```</Begin>
+      <End>^```</End>
+    </Span>
+
+    <!-- Titoli # ... ###### -->
+    <Rule color="Heading">^\#{1,6}\s.*$</Rule>
+
+    <!-- Regola orizzontale -->
+    <Rule color="Rule">^(\-{3,}|\*{3,}|_{3,})\s*$</Rule>
+
+    <!-- Citazioni -->
+    <Rule color="Quote">^\s*&gt;.*$</Rule>
+
+    <!-- Marcatori lista -->
+    <Rule color="ListMarker">^\s*([\*\+\-]|\d+\.)\s</Rule>
+
+    <!-- Link [testo](url) -->
+    <Rule color="Link">\[[^\]]*\]\([^\)]*\)</Rule>
+
+    <!-- Grassetto **...** o __...__ -->
+    <Rule color="Bold">(\*\*|__)(?=\S)(.+?)(\*\*|__)</Rule>
+
+    <!-- Corsivo *...* o _..._ -->
+    <Rule color="Italic">(\*|_)(?=\S)(.+?)(\*|_)</Rule>
+
+    <!-- Codice inline `...` -->
+    <Span color="InlineCode">
+      <Begin>`</Begin>
+      <End>`</End>
+    </Span>
+
+  </RuleSet>
+</SyntaxDefinition>
