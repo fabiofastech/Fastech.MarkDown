@@ -5,8 +5,8 @@
 </p>
 
 <p align="center">
-  <strong>Visualizzatore Markdown desktop per Windows</strong><br/>
-  WPF · .NET 10 · WebView2 · Markdig · Mermaid.js
+  <strong>Visualizzatore e editor Markdown desktop per Windows</strong><br/>
+  WPF · .NET 10 · WebView2 · Markdig · AvalonEdit · Mermaid.js
 </p>
 
 <p align="center">
@@ -20,6 +20,8 @@
 ## Funzionalità
 
 - 📄 **Rendering Markdown completo** — supporto tabelle, task list, footnotes, strikethrough e tutte le estensioni avanzate di [Markdig](https://github.com/xoofx/markdig)
+- ✏️ **Modalità modifica** — editor integrato [AvalonEdit](https://github.com/icsharpcode/AvalonEdit) con syntax highlighting Markdown e numeri di riga
+- 💾 **Salvataggio** — pulsante Salva + **Ctrl+S**; indicatore `*` di modifiche non salvate; prompt di conferma alla chiusura
 - 🌊 **Diagrammi Mermaid** — flowchart, sequence, gantt, class diagram e altri renderizzati inline
 - 🎨 **Syntax highlighting** — via [highlight.js](https://highlightjs.org/) con tema GitHub
 - 📁 **File Explorer integrato** — naviga una intera cartella di file `.md` tramite TreeView laterale
@@ -86,9 +88,13 @@ Fastech.MarkDown/
 │   │   ├── MarkdownRenderService.cs # Markdown → HTML
 │   │   └── SettingsService.cs       # Persistenza impostazioni (%AppData%)
 │   ├── Assets/                      # Icona e logo brand Fastech
-│   ├── wwwroot/                     # highlight.js, mermaid.js, CSS (copiati in output)
+│   ├── wwwroot/                     # highlight.js, mermaid.js, CSS, Markdown.xshd (copiati in output)
 │   ├── MainWindow.xaml              # UI principale
 │   └── MainWindow.xaml.cs           # Logica applicazione
+├── Fastech.MarkDown.Installer/
+│   ├── Package.wxs                  # Definizione WiX: directory, shortcut, associazioni file
+│   ├── build-installer.ps1          # Script build MSI (publish + harvest + wix build)
+│   └── INSTALLER.md                 # Istruzioni build MSI
 └── Fastech.MarkDown.slnx
 ```
 
@@ -101,6 +107,7 @@ Fastech.MarkDown/
 | Framework | WPF .NET 10 (`net10.0-windows`) |
 | Parsing Markdown | [Markdig](https://github.com/xoofx/markdig) |
 | Rendering HTML | Microsoft WebView2 |
+| Editor testo | [AvalonEdit](https://github.com/icsharpcode/AvalonEdit) |
 | Diagrammi | [Mermaid.js](https://mermaid.js.org/) |
 | Syntax highlight | [highlight.js](https://highlightjs.org/) |
 
