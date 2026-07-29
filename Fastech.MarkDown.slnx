@@ -1,3 +1,9 @@
 <Solution>
   <Project Path="Fastech.MarkDown.App/Fastech.MarkDown.App.csproj" />
+  <Folder Name="/Installer/">
+    <File Path="Fastech.MarkDown.Installer/Package.wxs" />
+    <File Path="Fastech.MarkDown.Installer/build-installer.ps1" />
+    <File Path="Fastech.MarkDown.Installer/INSTALLER.md" />
+    <File Path="output/FastechMarkdownViewer-1.1.0.0.msi" />
+  </Folder>
 </Solution>
