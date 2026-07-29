@@ -8,7 +8,7 @@
 
   <Package Name="Fastech Markdown Viewer"
            Manufacturer="Fastech"
-           Version="1.0.0.0"
+           Version="$(var.ProductVersion)"
            UpgradeCode="6D7F8A9B-C0D1-E2F3-A4B5-C6D7E8F90123"
            Language="1040"
            Codepage="1252">
@@ -16,6 +16,7 @@
     <SummaryInformation Keywords="Installer" Description="Fastech Markdown Viewer Setup" />
 
     <MajorUpgrade
+      AllowSameVersionUpgrades="yes"
       DowngradeErrorMessage="È già installata una versione più recente di Fastech Markdown Viewer." />
 
     <MediaTemplate EmbedCab="yes" />

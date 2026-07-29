@@ -153,7 +153,7 @@ if (-not (Test-Path $OutputDir)) { New-Item -ItemType Directory -Path $OutputDir
 
 $msiPath = Join-Path $OutputDir "FastechMarkdownViewer-$Version.msi"
 
-wix build "$PSScriptRoot\Package.wxs" $tmpWxs -o $msiPath -arch x64 -acceptEula wix7
+wix build "$PSScriptRoot\Package.wxs" $tmpWxs -o $msiPath -arch x64 -acceptEula wix7 -d ProductVersion=$Version
 
 if ($LASTEXITCODE -ne 0) { throw "wix build fallito." }
 
