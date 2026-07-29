@@ -6,8 +6,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
-    <AssemblyVersion>1.0.26175.0910</AssemblyVersion>
-    <FileVersion>1.0.26175.0910</FileVersion>
+    <AssemblyVersion>1.0.26210.1329</AssemblyVersion>
+    <FileVersion>1.0.26210.1329</FileVersion>
     <ApplicationIcon>Assets\fastech.ico</ApplicationIcon>
   </PropertyGroup>
 

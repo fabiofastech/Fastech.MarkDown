@@ -11,6 +11,7 @@ public class MarkdownRenderService
         <html>
         <head>
             <meta charset="utf-8"/>
+            {{BASE}}
             <link rel="stylesheet" href="https://assets.local/highlight-github.min.css"/>
             <script src="https://assets.local/highlight.min.js"></script>
             <script src="https://assets.local/mermaid.min.js"></script>
@@ -109,9 +110,12 @@ public class MarkdownRenderService
             .Build();
     }
 
-    public string RenderToHtml(string markdownContent)
+    public string RenderToHtml(string markdownContent, string? baseHref = null)
     {
         var html = Markdown.ToHtml(markdownContent, _pipeline);
-        return HtmlTemplate.Replace("{{CONTENT}}", html);
+        var baseTag = baseHref is null ? "" : $"""<base href="{baseHref}"/>""";
+        return HtmlTemplate
+            .Replace("{{BASE}}", baseTag)
+            .Replace("{{CONTENT}}", html);
     }
 }

@@ -12,6 +12,8 @@ namespace Fastech.MarkDown.App;
 
 public partial class MainWindow : Window
 {
+    private const string DocumentVirtualHost = "doc.local";
+
     private readonly MarkdownRenderService _markdownService = new();
     private readonly SettingsService _settingsService = new();
     private readonly ObservableCollection<FileTreeItem> _rootItems = new();
@@ -262,7 +264,8 @@ public partial class MainWindow : Window
         if (_editMode)
         {
             // Renderizza il contenuto corrente dell'editor (anche se non salvato)
-            WebView.NavigateToString(_markdownService.RenderToHtml(Editor.Text));
+            var baseHref = EnsureDocumentBaseHref(_currentFilePath);
+            WebView.NavigateToString(_markdownService.RenderToHtml(Editor.Text, baseHref));
             _editMode = false;
             Editor.Visibility = Visibility.Collapsed;
             WebView.Visibility = Visibility.Visible;
@@ -417,6 +420,21 @@ public partial class MainWindow : Window
         }
     }
 
+    // Mappa la cartella del file .md su un virtual host, cosi' le immagini con path
+    // relativo (es. "img/wbc.png") si risolvono correttamente in WebView2 invece di
+    // restare rotte contro about:blank (NavigateToString non ha un base URL implicito).
+    private string? EnsureDocumentBaseHref(string? filePath)
+    {
+        if (filePath is null || WebView.CoreWebView2 is null) return null;
+
+        var directory = Path.GetDirectoryName(filePath);
+        if (directory is null) return null;
+
+        WebView.CoreWebView2.SetVirtualHostNameToFolderMapping(
+            DocumentVirtualHost, directory, CoreWebView2HostResourceAccessKind.Allow);
+        return $"https://{DocumentVirtualHost}/";
+    }
+
     private void RenderFile(string filePath)
     {
         try
@@ -424,7 +442,8 @@ public partial class MainWindow : Window
             var content = File.ReadAllText(filePath);
             _currentFilePath = filePath;
             _settings.LastFilePath = filePath;
-            var html = _markdownService.RenderToHtml(content);
+            var baseHref = EnsureDocumentBaseHref(filePath);
+            var html = _markdownService.RenderToHtml(content, baseHref);
 
             void UpdateUi()
             {
