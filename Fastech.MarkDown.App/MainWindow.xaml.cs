@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using Fastech.MarkDown.App.Models;
 using Fastech.MarkDown.App.Services;
 using Microsoft.Web.WebView2.Core;
@@ -11,6 +12,8 @@ namespace Fastech.MarkDown.App;
 
 public partial class MainWindow : Window
 {
+    private const string DocumentVirtualHost = "doc.local";
+
     private readonly MarkdownRenderService _markdownService = new();
     private readonly SettingsService _settingsService = new();
     private readonly ObservableCollection<FileTreeItem> _rootItems = new();
@@ -18,6 +21,9 @@ public partial class MainWindow : Window
     private FileSystemWatcher? _watcher;
     private string? _currentFilePath;
     private bool _treeVisible = true;
+    private bool _editMode;
+    private bool _isDirty;
+    private bool _savingInternally;
     private AppSettings _settings = new();
 
     public MainWindow(string? startupFilePath = null)
@@ -27,6 +33,7 @@ public partial class MainWindow : Window
         FileTreeView.ItemsSource = _rootItems;
         Loaded += MainWindow_Loaded;
         Closing += MainWindow_Closing;
+        PreviewKeyDown += MainWindow_PreviewKeyDown;
     }
 
     private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -43,6 +50,8 @@ public partial class MainWindow : Window
             var wwwroot = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "wwwroot");
             WebView.CoreWebView2.SetVirtualHostNameToFolderMapping(
                 "assets.local", wwwroot, CoreWebView2HostResourceAccessKind.Allow);
+
+            LoadEditorHighlighting();
 
             _settings = _settingsService.Load();
             RestoreWindowState();
@@ -104,10 +113,43 @@ public partial class MainWindow : Window
 
     private void MainWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
     {
+        if (!ConfirmDiscardChanges())
+        {
+            e.Cancel = true;
+            return;
+        }
+
         _settings.WindowWidth  = Width;
         _settings.WindowHeight = Height;
         _settings.TreeColumnWidth = TreeColumn.Width.Value;
         _settingsService.Save(_settings);
+    }
+
+    private void MainWindow_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.S && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+        {
+            if (_editMode && _isDirty)
+                SaveCurrentFile();
+            e.Handled = true;
+        }
+    }
+
+    private void LoadEditorHighlighting()
+    {
+        try
+        {
+            var xshdPath = Path.Combine(
+                AppDomain.CurrentDomain.BaseDirectory, "wwwroot", "Markdown.xshd");
+            if (File.Exists(xshdPath))
+            {
+                using var reader = System.Xml.XmlReader.Create(xshdPath);
+                Editor.SyntaxHighlighting =
+                    ICSharpCode.AvalonEdit.Highlighting.Xshd.HighlightingLoader.Load(
+                        reader, ICSharpCode.AvalonEdit.Highlighting.HighlightingManager.Instance);
+            }
+        }
+        catch { /* Editor resta senza evidenziazione se la definizione non è caricabile */ }
     }
 
     private void ShowWelcomePage()
@@ -140,11 +182,19 @@ public partial class MainWindow : Window
                 C --> E[Visualizza]
             ```
             """;
+        _currentFilePath = null;
+        _editMode = false;
+        _isDirty = false;
+        Editor.Visibility = Visibility.Collapsed;
+        WebView.Visibility = Visibility.Visible;
+        BtnEdit.IsEnabled = false;
+        BtnSave.IsEnabled = false;
         WebView.NavigateToString(_markdownService.RenderToHtml(welcome));
     }
 
     private void BtnOpenFolder_Click(object sender, RoutedEventArgs e)
     {
+        if (!ConfirmDiscardChanges()) return;
         var dialog = new OpenFolderDialog { Title = "Seleziona cartella Markdown" };
         if (dialog.ShowDialog() == true)
             LoadFolder(dialog.FolderName);
@@ -152,6 +202,7 @@ public partial class MainWindow : Window
 
     private void BtnOpenFile_Click(object sender, RoutedEventArgs e)
     {
+        if (!ConfirmDiscardChanges()) return;
         var dialog = new OpenFileDialog
         {
             Filter = "Markdown|*.md;*.markdown|Tutti i file|*.*",
@@ -163,6 +214,8 @@ public partial class MainWindow : Window
 
     private void BtnRefresh_Click(object sender, RoutedEventArgs e)
     {
+        // In modifica il refresh non ricarica da disco (non sovrascrive l'editor)
+        if (_editMode) return;
         if (_currentFilePath != null)
             RenderFile(_currentFilePath);
     }
@@ -171,6 +224,125 @@ public partial class MainWindow : Window
     {
         _treeVisible = !_treeVisible;
         TreeColumn.Width = _treeVisible ? new GridLength(250) : new GridLength(0);
+    }
+
+    private void BtnEdit_Click(object sender, RoutedEventArgs e) => EnterEditMode();
+
+    private void BtnPreview_Click(object sender, RoutedEventArgs e) => EnterPreviewMode();
+
+    private void BtnSave_Click(object sender, RoutedEventArgs e) => SaveCurrentFile();
+
+    private void EnterEditMode()
+    {
+        if (string.IsNullOrEmpty(_currentFilePath) || !File.Exists(_currentFilePath))
+            return;
+
+        if (!_editMode)
+        {
+            try
+            {
+                Editor.Text = File.ReadAllText(_currentFilePath);
+            }
+            catch (Exception ex)
+            {
+                StatusText.Text = $"Errore apertura in modifica: {ex.Message}";
+                return;
+            }
+
+            _isDirty = false;
+            _editMode = true;
+            WebView.Visibility = Visibility.Collapsed;
+            Editor.Visibility = Visibility.Visible;
+            BtnSave.IsEnabled = false;
+            Editor.Focus();
+            UpdateTitleAndStatus();
+        }
+    }
+
+    private void EnterPreviewMode()
+    {
+        if (_editMode)
+        {
+            // Renderizza il contenuto corrente dell'editor (anche se non salvato)
+            var baseHref = EnsureDocumentBaseHref(_currentFilePath);
+            WebView.NavigateToString(_markdownService.RenderToHtml(Editor.Text, baseHref));
+            _editMode = false;
+            Editor.Visibility = Visibility.Collapsed;
+            WebView.Visibility = Visibility.Visible;
+            UpdateTitleAndStatus();
+        }
+    }
+
+    private void Editor_TextChanged(object? sender, EventArgs e)
+    {
+        if (!_editMode) return;
+        _isDirty = true;
+        BtnSave.IsEnabled = true;
+        UpdateTitleAndStatus();
+    }
+
+    private void SaveCurrentFile()
+    {
+        // Il salvataggio funziona sia in modalità Modifica che Anteprima (purché ci sia un file)
+        if (!_isDirty || string.IsNullOrEmpty(_currentFilePath)) return;
+
+        try
+        {
+            _savingInternally = true;
+            File.WriteAllText(_currentFilePath, Editor.Text);
+            _isDirty = false;
+            BtnSave.IsEnabled = false;
+            UpdateTitleAndStatus();
+        }
+        catch (Exception ex)
+        {
+            StatusText.Text = $"Errore salvataggio: {ex.Message}";
+        }
+        finally
+        {
+            _savingInternally = false;
+        }
+    }
+
+    /// <summary>
+    /// Se ci sono modifiche non salvate, chiede conferma. Ritorna false se l'utente annulla.
+    /// </summary>
+    private bool ConfirmDiscardChanges()
+    {
+        if (!_isDirty) return true;
+
+        var result = MessageBox.Show(
+            "Ci sono modifiche non salvate. Salvare prima di continuare?",
+            "Fastech Markdown Viewer",
+            MessageBoxButton.YesNoCancel, MessageBoxImage.Warning);
+
+        switch (result)
+        {
+            case MessageBoxResult.Yes:
+                SaveCurrentFile();
+                return !_isDirty;
+            case MessageBoxResult.No:
+                _isDirty = false;
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private void UpdateTitleAndStatus()
+    {
+        var name = string.IsNullOrEmpty(_currentFilePath)
+            ? string.Empty
+            : Path.GetFileName(_currentFilePath);
+        var dirtyMark = _isDirty ? "*" : string.Empty;
+        var modeLabel = _editMode ? " [Modifica]" : string.Empty;
+
+        Title = string.IsNullOrEmpty(name)
+            ? "Fastech Markdown Viewer"
+            : $"Fastech Markdown Viewer — {dirtyMark}{name}{modeLabel}";
+
+        if (!string.IsNullOrEmpty(_currentFilePath))
+            StatusText.Text = $"{dirtyMark}{_currentFilePath}{modeLabel}";
     }
 
     private void LoadFolder(string folderPath)
@@ -242,7 +414,25 @@ public partial class MainWindow : Window
     private void FileTreeView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
     {
         if (e.NewValue is FileTreeItem { IsDirectory: false } file)
+        {
+            if (!ConfirmDiscardChanges()) return;
             RenderFile(file.FullPath);
+        }
+    }
+
+    // Mappa la cartella del file .md su un virtual host, cosi' le immagini con path
+    // relativo (es. "img/wbc.png") si risolvono correttamente in WebView2 invece di
+    // restare rotte contro about:blank (NavigateToString non ha un base URL implicito).
+    private string? EnsureDocumentBaseHref(string? filePath)
+    {
+        if (filePath is null || WebView.CoreWebView2 is null) return null;
+
+        var directory = Path.GetDirectoryName(filePath);
+        if (directory is null) return null;
+
+        WebView.CoreWebView2.SetVirtualHostNameToFolderMapping(
+            DocumentVirtualHost, directory, CoreWebView2HostResourceAccessKind.Allow);
+        return $"https://{DocumentVirtualHost}/";
     }
 
     private void RenderFile(string filePath)
@@ -252,13 +442,20 @@ public partial class MainWindow : Window
             var content = File.ReadAllText(filePath);
             _currentFilePath = filePath;
             _settings.LastFilePath = filePath;
-            var html = _markdownService.RenderToHtml(content);
+            var baseHref = EnsureDocumentBaseHref(filePath);
+            var html = _markdownService.RenderToHtml(content, baseHref);
 
             void UpdateUi()
             {
+                // Apertura di un nuovo file: torna sempre in Anteprima
+                _editMode = false;
+                _isDirty = false;
+                Editor.Visibility = Visibility.Collapsed;
+                WebView.Visibility = Visibility.Visible;
+                BtnEdit.IsEnabled = true;
+                BtnSave.IsEnabled = false;
                 WebView.NavigateToString(html);
-                StatusText.Text = filePath;
-                Title = $"Fastech Markdown Viewer — {Path.GetFileName(filePath)}";
+                UpdateTitleAndStatus();
             }
 
             if (Dispatcher.CheckAccess())
@@ -294,6 +491,9 @@ public partial class MainWindow : Window
 
     private void OnFileChanged(object sender, FileSystemEventArgs e)
     {
+        // Ignora le modifiche generate dal salvataggio interno o mentre si è in modifica,
+        // per non sovrascrivere il contenuto dell'editor o innescare loop di refresh.
+        if (_savingInternally || _editMode) return;
         if (e.FullPath == _currentFilePath)
             RenderFile(e.FullPath);
     }
